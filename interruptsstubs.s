@@ -97,3 +97,4 @@ _ZN16InterruptManager15InterruptIgnoreEv:
 
 .data
     interruptnumber: .byte 0
+    
