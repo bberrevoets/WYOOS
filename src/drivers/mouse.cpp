@@ -1,4 +1,6 @@
-#include "mouse.h"
+#include <drivers/mouse.h>
+
+using namespace wyoos::drivers;
 
 void printf(char *);
 
@@ -10,11 +12,11 @@ void MouseEventHandler::OnActivate()
 {
 }
 
-void MouseEventHandler::OnMouseButtonPressed(uint8_t button)
+void MouseEventHandler::OnMouseButtonPressed(wyoos::common::uint8_t button)
 {
 }
 
-void MouseEventHandler::OnMouseButtonReleased(uint8_t button)
+void MouseEventHandler::OnMouseButtonReleased(wyoos::common::uint8_t button)
 {
 }
 
@@ -22,7 +24,7 @@ void MouseEventHandler::OnMouseMove(int x, int y)
 {
 }
 
-MouseDriver::MouseDriver(InterruptManager *manager, MouseEventHandler *handler) : InterruptHandler(0x2C, manager), dataport(0x60), commandport(0x64)
+MouseDriver::MouseDriver(wyoos::hardwarecommunication::InterruptManager *manager,MouseEventHandler *handler) : InterruptHandler(0x2C, manager), dataport(0x60), commandport(0x64)
 {
     this->handler = handler;
 }
@@ -38,7 +40,7 @@ void MouseDriver::Activate()
 
     commandport.Write(0xA8);              // activate the mouse commands
     commandport.Write(0x20);              // get current state
-    uint8_t status = dataport.Read() | 2; // read the status and set the second rightmost bit to true.
+    wyoos::common::uint8_t status = dataport.Read() | 2; // read the status and set the second rightmost bit to true.
     commandport.Write(0x60);              // Set state command
     dataport.Write(status);               // and write the new status
 
@@ -48,9 +50,9 @@ void MouseDriver::Activate()
     handler->OnActivate();
 }
 
-uint32_t MouseDriver::HandleInterrupt(uint32_t esp)
+wyoos::common::uint32_t MouseDriver::HandleInterrupt(wyoos::common::uint32_t esp)
 {
-    uint8_t status = commandport.Read();
+    wyoos::common::uint8_t status = commandport.Read();
     if (!(status & 0x20))
         return esp;
 
@@ -67,7 +69,7 @@ uint32_t MouseDriver::HandleInterrupt(uint32_t esp)
             handler->OnMouseMove(buffer[1], -buffer[2]);
         }
 
-        for (uint8_t i = 0; i < 3; i++)
+        for (wyoos::common::uint8_t i = 0; i < 3; i++)
         {
             if ((buffer[0] & (0x01 << i)) != (buttons & (0x01 << i)))
             {

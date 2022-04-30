@@ -1,7 +1,8 @@
-#include "keyboard.h"
+#include <drivers/keyboard.h>
+using namespace wyoos::drivers;
 
 void printf(char *);
-void printfHex(uint8_t);
+void printfHex(wyoos::common::uint8_t);
 
 KeyboardEventHandler::KeyboardEventHandler()
 {
@@ -15,7 +16,7 @@ void KeyboardEventHandler::OnKeyUp(char c)
 {
 }
 
-KeyboardDriver::KeyboardDriver(InterruptManager *manager, KeyboardEventHandler *handler) : InterruptHandler(0x21, manager), dataport(0x60), commandport(0x64)
+KeyboardDriver::KeyboardDriver(wyoos::hardwarecommunication::InterruptManager *manager, KeyboardEventHandler *handler) : InterruptHandler(0x21, manager), dataport(0x60), commandport(0x64)
 {
     this->handler = handler;
 }
@@ -28,18 +29,18 @@ void KeyboardDriver::Activate()
 {
     while (commandport.Read() & 0x1)
         dataport.Read();
-    commandport.Write(0xAE);                        // activate the interrupts
-    commandport.Write(0x20);                        // get current state
-    uint8_t status = (dataport.Read() | 1) & ~0x10; // read the status and set the rightmost bit and clear then second rightmost bit.
-    commandport.Write(0x60);                        // Set state command
-    dataport.Write(status);                         // and write the new status
+    commandport.Write(0xAE);                                       // activate the interrupts
+    commandport.Write(0x20);                                       // get current state
+    wyoos::common::uint8_t status = (dataport.Read() | 1) & ~0x10; // read the status and set the rightmost bit and clear then second rightmost bit.
+    commandport.Write(0x60);                                       // Set state command
+    dataport.Write(status);                                        // and write the new status
 
     dataport.Write(0xF4); // Activate the keyboard
 }
 
-uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)
+wyoos::common::uint32_t KeyboardDriver::HandleInterrupt(wyoos::common::uint32_t esp)
 {
-    uint8_t key = dataport.Read();
+    wyoos::common::uint8_t key = dataport.Read();
 
     if (handler == 0)
         return esp;

@@ -1,8 +1,17 @@
 {
-  "folders": [
-    {
-      "path": "."
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "files.associations": {
+            "*.do": "tcl",
+            "*.xdc": "tcl",
+            "*.sdc": "tcl",
+            "*.pcf": "tcl",
+            "*.s": "gas",
+            "functional": "cpp"
+        }
     }
-  ],
-  "settings": {}
 }

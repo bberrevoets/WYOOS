@@ -1,15 +1,17 @@
-#include "types.h"
-#include "gdt.h"
-#include "interrupts.h"
-#include "driver.h"
-#include "keyboard.h"
-#include "mouse.h"
+#include <common/types.h>
+#include <gdt.h>
+#include <hardwarecommunication/interrupts.h>
+#include <drivers/driver.h>
+#include <drivers/keyboard.h>
+#include <drivers/mouse.h>
+
+using namespace wyoos;
 
 void printf(char *str)
 {
-    static uint16_t *VideoMemory = (uint16_t *)0xb8000;
+    static wyoos::common::uint16_t *VideoMemory = (wyoos::common::uint16_t *)0xb8000;
 
-    static uint8_t x = 0, y = 0;
+    static wyoos::common::uint8_t x = 0, y = 0;
 
     for (int i = 0; str[i] != '\0'; ++i)
     {
@@ -42,7 +44,7 @@ void printf(char *str)
     }
 }
 
-void printfHex(uint8_t b)
+void printfHex(wyoos::common::uint8_t b)
 {
     char *foo = "00\n";
     char *hex = "0123456789ABCDEF";
@@ -51,7 +53,7 @@ void printfHex(uint8_t b)
     printf(foo);
 }
 
-class PrintfKeyboardEventHandler : public KeyboardEventHandler
+class PrintfKeyboardEventHandler : public wyoos::drivers::KeyboardEventHandler
 {
 public:
     void OnKeyDown(char c)
@@ -62,14 +64,14 @@ public:
     }
 };
 
-class MouseToConsole : public MouseEventHandler
+class MouseToConsole : public wyoos::drivers::MouseEventHandler
 {
-    int8_t x, y;
+    wyoos::common::int8_t x, y;
 
 public:
     void OnMouseMove(int xoffset, int yoffset)
     {
-        static uint16_t *VideoMemory = (uint16_t *)0xb8000;
+        static wyoos::common::uint16_t *VideoMemory = (wyoos::common::uint16_t *)0xb8000;
         VideoMemory[80 * y + x] = (VideoMemory[80 * y + x] & 0x0F00) << 4 | (VideoMemory[80 * y + x] & 0xF000) >> 4 | (VideoMemory[80 * y + x] & 0x00FF);
 
         x += xoffset;
@@ -88,7 +90,7 @@ public:
 
     void OnActivate()
     {
-        uint16_t *VideoMemory = (uint16_t *)0xb8000;
+        wyoos::common::uint16_t *VideoMemory = (wyoos::common::uint16_t *)0xb8000;
         x = 40;
         y = 12;
         VideoMemory[80 * y + x] = (VideoMemory[80 * y + x] & 0x0F00) << 4 | (VideoMemory[80 * y + x] & 0xF000) >> 4 | (VideoMemory[80 * y + x] & 0x00FF);
@@ -104,23 +106,23 @@ extern "C" void callConstructors()
         (*i)();
 }
 
-extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot_magic*/)
+extern "C" void kernelMain(const void *multiboot_structure, wyoos::common::uint32_t /*multiboot_magic*/)
 {
     printf("Hello World! --- http://www.berrevoets.net\n");
 
     GlobalDescriptorTable gdt;
-    InterruptManager interrupts(0x20, &gdt);
+    wyoos::hardwarecommunication::InterruptManager interrupts(0x20, &gdt);
 
     printf("Initializing Hardware, Stage 1\n");
 
-    DriverManager driverManager;
+    wyoos::drivers::DriverManager driverManager;
 
     PrintfKeyboardEventHandler kbhandler;
-    KeyboardDriver keyboard(&interrupts, &kbhandler);
+    wyoos::drivers::KeyboardDriver keyboard(&interrupts, &kbhandler);
     driverManager.AddDriver(&keyboard);
 
     MouseToConsole mousehandler;
-    MouseDriver mouse(&interrupts, &mousehandler);
+    wyoos::drivers::MouseDriver mouse(&interrupts, &mousehandler);
     driverManager.AddDriver(&mouse);
 
     printf("Initializing Hardware, Stage 2\n");
