@@ -1,10 +1,11 @@
 #include <hardwarecommunication/interrupts.h>
+using namespace wyoos::common;
 using namespace wyoos::hardwarecommunication;
 
 void printf(char *);
-void printfHex(wyoos::common::uint8_t);
+void printfHex(uint8_t);
 
-InterruptHandler::InterruptHandler(wyoos::common::uint8_t interruptNumber, InterruptManager *interruptManager)
+InterruptHandler::InterruptHandler(uint8_t interruptNumber, InterruptManager *interruptManager)
 {
     this->interruptNumber = interruptNumber;
     this->interruptManager = interruptManager;
@@ -17,7 +18,7 @@ InterruptHandler::~InterruptHandler()
         interruptManager->handlers[interruptNumber] = 0;
 }
 
-wyoos::common::uint32_t InterruptHandler::HandleInterrupt(wyoos::common::uint32_t esp)
+uint32_t InterruptHandler::HandleInterrupt(uint32_t esp)
 {
     return esp;
 }
@@ -27,34 +28,34 @@ InterruptManager::GateDescriptor InterruptManager::interruptDescriptorTable[256]
 InterruptManager *InterruptManager::ActiveInterruptManager = 0;
 
 void InterruptManager::SetInterruptDescriptorTableEntry(
-    wyoos::common::uint8_t interrupt,
-    wyoos::common::uint16_t CodeSegment,
+    uint8_t interrupt,
+    uint16_t CodeSegment,
     void (*handler)(),
-    wyoos::common::uint8_t DescriptorPrivilegeLevel,
-    wyoos::common::uint8_t DescriptorType)
+    uint8_t DescriptorPrivilegeLevel,
+    uint8_t DescriptorType)
 {
     // address of pointer to code segment (relative to global descriptor table)
     // and address of the handler (relative to segment)
-    interruptDescriptorTable[interrupt].handlerAddressLowBits = ((wyoos::common::uint32_t)handler) & 0xFFFF;
-    interruptDescriptorTable[interrupt].handlerAddressHighBits = (((wyoos::common::uint32_t)handler) >> 16) & 0xFFFF;
+    interruptDescriptorTable[interrupt].handlerAddressLowBits = ((uint32_t)handler) & 0xFFFF;
+    interruptDescriptorTable[interrupt].handlerAddressHighBits = (((uint32_t)handler) >> 16) & 0xFFFF;
     interruptDescriptorTable[interrupt].gdt_codeSegmentSelector = CodeSegment;
 
-    const wyoos::common::uint8_t IDT_DESC_PRESENT = 0x80;
+    const uint8_t IDT_DESC_PRESENT = 0x80;
     interruptDescriptorTable[interrupt].access = IDT_DESC_PRESENT | ((DescriptorPrivilegeLevel & 3) << 5) | DescriptorType;
     interruptDescriptorTable[interrupt].reserved = 0;
 }
 
-InterruptManager::InterruptManager(wyoos::common::uint16_t hardwareInterruptOffset, GlobalDescriptorTable *globalDescriptorTable)
+InterruptManager::InterruptManager(uint16_t hardwareInterruptOffset, GlobalDescriptorTable *globalDescriptorTable)
     : picMasterCommand(0x20),
       picMasterData(0x21),
       picSlaveCommand(0xA0),
       picSlaveData(0xA1)
 {
     this->hardwareInterruptOffset = hardwareInterruptOffset;
-    wyoos::common::uint32_t CodeSegment = globalDescriptorTable->CodeSegmentSelector();
+    uint32_t CodeSegment = globalDescriptorTable->CodeSegmentSelector();
 
-    const wyoos::common::uint8_t IDT_INTERRUPT_GATE = 0xE;
-    for (wyoos::common::uint8_t i = 255; i > 0; --i)
+    const uint8_t IDT_INTERRUPT_GATE = 0xE;
+    for (uint8_t i = 255; i > 0; --i)
     {
         SetInterruptDescriptorTableEntry(i, CodeSegment, &InterruptIgnore, 0, IDT_INTERRUPT_GATE);
         handlers[i] = 0;
@@ -118,7 +119,7 @@ InterruptManager::InterruptManager(wyoos::common::uint16_t hardwareInterruptOffs
 
     InterruptDescriptorTablePointer idt_pointer;
     idt_pointer.size = 256 * sizeof(GateDescriptor) - 1;
-    idt_pointer.base = (wyoos::common::uint32_t)interruptDescriptorTable;
+    idt_pointer.base = (uint32_t)interruptDescriptorTable;
     asm volatile("lidt %0"
                  :
                  : "m"(idt_pointer));
@@ -129,7 +130,7 @@ InterruptManager::~InterruptManager()
     Deactivate();
 }
 
-wyoos::common::uint16_t InterruptManager::HardwareInterruptOffset()
+uint16_t InterruptManager::HardwareInterruptOffset()
 {
     return hardwareInterruptOffset;
 }
@@ -152,7 +153,7 @@ void InterruptManager::Deactivate()
     }
 }
 
-wyoos::common::uint32_t InterruptManager::HandleInterrupt(wyoos::common::uint8_t interrupt, wyoos::common::uint32_t esp)
+uint32_t InterruptManager::HandleInterrupt(uint8_t interrupt, uint32_t esp)
 {
     if (ActiveInterruptManager != 0)
     {
@@ -162,7 +163,7 @@ wyoos::common::uint32_t InterruptManager::HandleInterrupt(wyoos::common::uint8_t
     return esp;
 }
 
-wyoos::common::uint32_t InterruptManager::DoHandleInterrupt(wyoos::common::uint8_t interrupt, wyoos::common::uint32_t esp)
+uint32_t InterruptManager::DoHandleInterrupt(uint8_t interrupt, uint32_t esp)
 {
     if (handlers[interrupt] != 0)
         esp = handlers[interrupt]->HandleInterrupt(esp);

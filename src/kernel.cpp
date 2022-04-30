@@ -1,6 +1,7 @@
 #include <common/types.h>
 #include <gdt.h>
 #include <hardwarecommunication/interrupts.h>
+#include <hardwarecommunication/pci.h>
 #include <drivers/driver.h>
 #include <drivers/keyboard.h>
 #include <drivers/mouse.h>
@@ -46,7 +47,7 @@ void printf(char *str)
 
 void printfHex(wyoos::common::uint8_t b)
 {
-    char *foo = "00\n";
+    char *foo = "00";
     char *hex = "0123456789ABCDEF";
     foo[0] = hex[(b >> 4) & 0x0F];
     foo[1] = hex[b & 0x0F];
@@ -108,12 +109,12 @@ extern "C" void callConstructors()
 
 extern "C" void kernelMain(const void *multiboot_structure, wyoos::common::uint32_t /*multiboot_magic*/)
 {
-    printf("Hello World! --- http://www.berrevoets.net\n");
+    printf("WYOOS - http://www.berrevoets.net\n");
 
     GlobalDescriptorTable gdt;
     wyoos::hardwarecommunication::InterruptManager interrupts(0x20, &gdt);
 
-    printf("Initializing Hardware, Stage 1\n");
+    printf("Initializing Hardware, Stage 1\n\n");
 
     wyoos::drivers::DriverManager driverManager;
 
@@ -125,7 +126,10 @@ extern "C" void kernelMain(const void *multiboot_structure, wyoos::common::uint3
     wyoos::drivers::MouseDriver mouse(&interrupts, &mousehandler);
     driverManager.AddDriver(&mouse);
 
-    printf("Initializing Hardware, Stage 2\n");
+    PeripheralComponentInterconnectController PCIController;
+    PCIController.SelectDrivers(&driverManager);
+
+    printf("\nInitializing Hardware, Stage 2\n");
     driverManager.ActivateAll();
 
     printf("Initializing Hardware, Stage 3\n");

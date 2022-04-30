@@ -14,3 +14,4 @@ simmilar effect such as [**BoneOS**](https://github.com/Bone-Project/BoneOS)
 * Video 7 Done!
 * Video 8 Done!
 * Video 9 Done!
+* Video 10 Done!
