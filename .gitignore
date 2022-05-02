@@ -6,3 +6,5 @@
 *.iso
 
 SerialPort.txt
+
+.vscode/
