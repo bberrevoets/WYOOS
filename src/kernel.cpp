@@ -127,7 +127,7 @@ extern "C" void kernelMain(const void *multiboot_structure, wyoos::common::uint3
     driverManager.AddDriver(&mouse);
 
     PeripheralComponentInterconnectController PCIController;
-    PCIController.SelectDrivers(&driverManager);
+    PCIController.SelectDrivers(&driverManager, &interrupts);
 
     printf("\nInitializing Hardware, Stage 2\n");
     driverManager.ActivateAll();
